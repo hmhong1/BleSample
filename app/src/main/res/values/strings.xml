@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">BleSample</string>
+
+    <string name="cancel">취소</string>
+
+    <string name="bluetooth_title">BLE Search Device List</string>
+    <string name="bluetooth_search_fail">Searching ble device failed</string>
+    <string name="bluetooth_enable">블루투스 활성화</string>
+    <string name="bluetooth_disenable">블루투스 비활성화</string>
+    <string name="bluetooth_not_device">블루투스 사용불가</string>
+    <string name="bluetooth_on">블루투스를 ON 해주세요.</string>
+    <string name="bluetooth_searching">블루투스 검색중</string>
 </resources>
