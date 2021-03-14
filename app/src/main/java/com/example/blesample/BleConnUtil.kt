@@ -15,7 +15,6 @@ import android.view.View
 import androidx.annotation.RequiresApi
 import java.util.*
 
-
 class BleConnUtil(var context: Context) {
 
     companion object {
@@ -34,6 +33,10 @@ class BleConnUtil(var context: Context) {
         const val GATT_DATA_READ = "com.example.blesample.GATT_DATA_READ"
         const val GATT_DATA_WRITE = "com.example.blesample.GATT_DATA_WRITE"
         const val GATT_SERVICE_DISCOVERED = "com.example.blesample.GATT_SERVICE_DISCOVERED"
+
+        private var UUID_KEY = UUID.fromString("01234567-0123-4567-89AB-456789ABCDEF") //beacon uuid key
+        private var UUID_KEY_NOTI = UUID.fromString("noti_key") //noti key
+        private var UUID_KEY_WRITE = UUID.fromString("write_key") //write key
     }
 
     /* 블루투스 GATT 서버 */
@@ -249,11 +252,7 @@ class BleConnUtil(var context: Context) {
     /**
      * 검색된 블루투스 목록 팝업 노출
      * */
-    private fun showDeviceListDialog(
-        cxt: Context,
-        scanDeviceList: ArrayList<BluetoothDevice>,
-        onClickListener: View.OnClickListener
-    ) {
+    private fun showDeviceListDialog(cxt: Context, scanDeviceList: ArrayList<BluetoothDevice>, onClickListener: View.OnClickListener) {
         if(bleScanListDialog == null)
             bleScanListDialog = BleScanListDialog(cxt, scanDeviceList, onClickListener)
 
@@ -325,17 +324,26 @@ class BleConnUtil(var context: Context) {
 
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
+
+                    gatt?.let {
+                        var notification = it.getService(UUID_KEY)?.getCharacteristic(UUID_KEY_NOTI)
+                        it.setCharacteristicNotification(notification, true)
+
+                        var dsc = notification?.getDescriptor(UUID_KEY_WRITE)
+
+                        dsc?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        var write = it.writeDescriptor(dsc)
+
+                        Log.d(TAG, "onServicesDiscovered write $write")
+                    }
+
                     broadcastUpdate(GATT_SERVICE_DISCOVERED)
                 }
                 else -> Log.w(TAG, "onServicesDiscovered not success : $status")
             }
         }
 
-        override fun onCharacteristicRead(
-            gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic,
-            status: Int
-        ) {
+        override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
             when (status) {
                 BluetoothGatt.GATT_SUCCESS -> {
                     broadcastUpdate(GATT_DATA_READ, characteristic)
@@ -343,11 +351,7 @@ class BleConnUtil(var context: Context) {
             }
         }
 
-        override fun onCharacteristicWrite(
-            gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?,
-            status: Int
-        ) {
+        override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?, status: Int) {
             super.onCharacteristicWrite(gatt, characteristic, status)
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
